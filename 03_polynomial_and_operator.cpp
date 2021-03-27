@@ -13,19 +13,19 @@ istream& operator>>(istream& is, Polynomial& p);
 
 //다항식(termArray는 Term의 포인터, arraySize == 할당된 Term의 수, count == 저장된 항의 수)
 class Polynomial {
-  public:
+public:
 	Polynomial();
 	~Polynomial();
 	void addTerm(const int c, const int i);
-	Polynomial sMultPoly(const int c, const int e);
-	Polynomial evalPoly(const int c);
+	const Polynomial sMultPoly(const int c, const int e);
+	const int evalPoly(const int c);
 	const Polynomial operator+(const Polynomial& p);
 	const Polynomial operator*(const Polynomial& p);
 	Polynomial& operator=(const Polynomial& p);
 	friend ostream& operator<<(ostream& os, const Polynomial& p);
 	friend istream& operator>>(istream& is, Polynomial& p);
 
-  private:
+private:
 	Term* termArray;	//Term의 포인터
 	int arraySize;	//할당된 Term의 수
 	int count;		//저장된 항의 수
@@ -39,7 +39,7 @@ class Term {
 	friend ostream& operator<<(ostream& os, const Polynomial& p);
 	friend istream& operator>>(istream& is, Polynomial& p);
 
-  private:
+private:
 	int c;		//계수
 	int exp;	//지수 (exp >= 0)
 };
@@ -48,7 +48,7 @@ int main() {
 
 	while (true) {
 		Polynomial a, b, c, d, t;
-		//int x;
+		int x;
 		cout << ">Input polynomials a, b, c : ";
 		cin >> a;
 		cin >> b;
@@ -56,13 +56,14 @@ int main() {
 		cout << "A(x) = " << a << endl;
 		cout << "B(x) = " << b << endl;
 		cout << "C(x) = " << c << endl;
-		//t = a * b;
-		//d = t + c;
-		//cout << "T(x) = " << t << endl;
-		//cout << "D(x) = " << d << endl;
-		//cout << ">Input x vlaue : ";
-		//cin >> x;
-		//cout << "A*B+C = " << d.evalPoly(x) << endl;
+		t = a * b;
+		d = t + c;
+		cout << "T(x) = " << t << endl;
+		cout << "D(x) = " << d << endl;
+		cout << ">Input x vlaue : ";
+		cin >> x;
+		cout << "A*B+C = " << d.evalPoly(x) << endl;
+		cout << endl;
 	}
 
 	return 0;
@@ -223,4 +224,40 @@ Polynomial& Polynomial::operator=(const Polynomial& p) {
 	}
 
 	return *this;
+}
+
+//다항식의 곱셈
+const Polynomial Polynomial::sMultPoly(const int c, const int e) {
+	Polynomial temp;
+
+	for (int i = 0; i < count; i++) {
+		temp.addTerm(termArray[i].c * c, termArray[i].exp + e);
+	}
+
+	temp.sortTermArray();
+
+	return temp;
+}
+
+const Polynomial Polynomial::operator*(const Polynomial& p) {
+	Polynomial temp;
+
+	for (int i = 0; i < p.count; i++) {
+		temp = temp + sMultPoly(p.termArray[i].c, p.termArray[i].exp);
+	}
+
+	temp.sortTermArray();
+
+	return temp;
+}
+
+//다항식의 값을 계산
+const int Polynomial::evalPoly(const int c) {
+	int y = 0; //결과값을 저장할 변수
+
+	for (int i = 0; i < count; i++) {	//각 항의 값을 계산하여 결과값에 더한다.
+		y += termArray[i].c * (int)pow(c, termArray[i].exp);
+	}
+
+	return y;
 }
