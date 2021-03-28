@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <regex>
 #include <cmath>
+#include <cstdio>
 
 using namespace std;
 
@@ -13,24 +14,25 @@ istream& operator>>(istream& is, Polynomial& p);
 
 //다항식(termArray는 Term의 포인터, arraySize == 할당된 Term의 수, count == 저장된 항의 수)
 class Polynomial {
-public:
+  public:
 	Polynomial();
-	~Polynomial();
-	void addTerm(const int c, const int i);
-	const Polynomial sMultPoly(const int c, const int e);
-	const int evalPoly(const int c);
-	const Polynomial operator+(const Polynomial& p);
-	const Polynomial operator*(const Polynomial& p);
-	Polynomial& operator=(const Polynomial& p);
-	friend ostream& operator<<(ostream& os, const Polynomial& p);
+	void addTerm(const int c, const int i);		//항을 추가 (arraySize보다 항이 많으면 arraySize + 5의 새로운 배열 할당 후 복사)
+	const Polynomial sMultPoly(const int c, const int e);	//다항식의 단항 곱셈
+	const int evalPoly(const int c);			//다항식의 값을 계산
+	const Polynomial operator+(const Polynomial& p);	//다항식 덧셈 연산
+	const Polynomial operator*(const Polynomial& p);	//다항식의 곱 연산
+	Polynomial& operator=(const Polynomial& p);			//다항식 대입 연산
+	friend ostream& operator<<(ostream& os, const Polynomial& p);	// 출력 연산자 << 오버로딩 (항이 없을 경우 0으로 계산)
+	// 입력 연산자 >> 오버로딩 (정상적인 (계수, 지수) 형태의 입력값만 받아서 처리, 이외는 무시, 항이 없을 경우 0으로 계산)
 	friend istream& operator>>(istream& is, Polynomial& p);
+	const int getCount() { return count; }
 
-private:
+  private:
 	Term* termArray;	//Term의 포인터
 	int arraySize;	//할당된 Term의 수
 	int count;		//저장된 항의 수
 
-	void sortTermArray();
+	void sortTermArray();			//항을 지수의 내림차순으로 정렬하고 동류항을 계산한 결과를 저장
 };
 
 //(c == 계수, exp == 지수)의 쌍
@@ -39,7 +41,7 @@ class Term {
 	friend ostream& operator<<(ostream& os, const Polynomial& p);
 	friend istream& operator>>(istream& is, Polynomial& p);
 
-private:
+  private:
 	int c;		//계수
 	int exp;	//지수 (exp >= 0)
 };
@@ -49,10 +51,18 @@ int main() {
 	while (true) {
 		Polynomial a, b, c, d, t;
 		int x;
-		cout << ">Input polynomials a, b, c : ";
-		cin >> a;
+		cout << ">Input polynomials a, b, c : ";	//(계수, 지수)형태의 정상정인 입력값만 처리, 이외는 무시 (항이 없을 경우 0으로 계산)
+		cin >> a;									//#입력시 프로그램 종료
 		cin >> b;
 		cin >> c;
+
+		if (a.getCount() == 0 || b.getCount() == 0 || c.getCount() == 0) { //a, b, c중 하나라도 항이 없을 경우 에러
+			cout << "error" << endl << endl;
+			cin.clear();		//오류 상태 초기화
+			fseek(stdin, 0, SEEK_END);	//버퍼 초기화
+			continue;
+		}
+
 		cout << "A(x) = " << a << endl;
 		cout << "B(x) = " << b << endl;
 		cout << "C(x) = " << c << endl;
@@ -62,14 +72,22 @@ int main() {
 		cout << "D(x) = " << d << endl;
 		cout << ">Input x vlaue : ";
 		cin >> x;
-		cout << "A*B+C = " << d.evalPoly(x) << endl;
-		cout << endl;
+
+		if (cin.fail()) {		//X가 숫자가 아닐 경우 에러
+			cout << "error" << endl << endl;
+			cin.clear();		//오류 상태 초기화
+			fseek(stdin, 0, SEEK_END);	//버퍼 초기화
+			continue;
+		}
+
+		cout << "A*B+C = " << d.evalPoly(x);
+		cout << endl << endl;
 	}
 
 	return 0;
 }
 
-// 출력 연산자 << 오버로딩 (termArray가 정렬되어있다고 가정)
+// 출력 연산자 << 오버로딩 (항이 없을 경우 0으로 계산)
 ostream& operator<<(ostream& os, const Polynomial& p) {
 	for (int i = 0; i < p.count; i++) {
 		if (i > 0 && p.termArray[i].c > 0) { os << "+"; } //두번째 항부터는 계수가 양수이면 + 출력
@@ -94,7 +112,7 @@ ostream& operator<<(ostream& os, const Polynomial& p) {
 	return os;
 }
 
-// 입력 연산자 >> 오버로딩 (정상적인 (계수, 지수) 형태의 입력값만 받아서 처리, 이외는 무시)
+// 입력 연산자 >> 오버로딩 (정상적인 (계수, 지수) 형태의 입력값만 받아서 처리, 이외는 무시, 항이 없을 경우 0으로 계산)
 istream& operator>>(istream& is, Polynomial& p) {
 	int c;	//계수 임시 저장
 	int i;		//지수 임시 저장
@@ -118,7 +136,7 @@ istream& operator>>(istream& is, Polynomial& p) {
 		str = sm.suffix(); //문자열에서 다음 (계수,지수)형태 탐색
 	}
 
-	p.sortTermArray();	//입력받은 항들을 정렬
+	p.sortTermArray();	//입력받은 항들을 정렬 후 동류항 계산
 
 	return is;
 }
@@ -128,11 +146,6 @@ Polynomial::Polynomial() {
 	arraySize = 5;
 	count = 0;
 	termArray = new Term[arraySize];
-}
-
-// Polynomial 소멸자 (termArray 반환)
-Polynomial::~Polynomial() {
-	if (termArray != NULL) { delete[] termArray; }
 }
 
 //항을 추가 (arraySize보다 항이 많으면 arraySize + 5의 새로운 배열 할당 후 복사)
@@ -151,7 +164,7 @@ void Polynomial::addTerm(const int c, const int i) {
 
 //항을 지수의 내림차순으로 정렬하고 동류항을 계산한 결과를 저장
 void Polynomial::sortTermArray() {
-	for (int i = 0; i < count; i++) {	//termArray를 내림차순으로 정렬
+	for (int i = 0; i < count; i++) {	//termArray를 내림차순으로 정렬 (선택 정렬)
 		int max = i;
 
 		for (int temp = i + 1; temp < count; temp++) {
@@ -164,26 +177,26 @@ void Polynomial::sortTermArray() {
 		swap(termArray[i].c, termArray[max].c);
 	}
 
-	if (count > 0) {
-		Term* tarr = new Term[arraySize];
-		int is = 0;
+	if (count > 0) {	//항이 있을 경우
+		Term* tarr = new Term[arraySize];	//결과값을 저장할 변수
+		int is = 0;		//tarr의 index
 
 		tarr[is].c = termArray[is].c;		//첫 항을 설정
 		tarr[is].exp = termArray[is].exp;
 
-		for (int i = 1; i < count; i++) {
+		for (int i = 1; i < count; i++) {	//두번째 항부터 동류항 계산
 			if (tarr[is].exp == termArray[i].exp) { //임시 배열의 현재 항 계수가 termArray의 현재 항 계수가 같을 경우 (동류항 계산)
 				tarr[is].c += termArray[i].c;
 			}
-			else {
+			else {		//항 계수가 다르면 다음 index에 항 추가
 				is++;
 				tarr[is].c = termArray[i].c;
 				tarr[is].exp = termArray[i].exp;
 			}
 		}
 
-		is++;
-		delete[] termArray;
+		is++;	//is를 항의 갯수로 사용
+		delete[] termArray;		//기존 배열을 해제
 		termArray = new Term[arraySize];	//termArray를 초기화
 		count = 0;
 
@@ -195,60 +208,63 @@ void Polynomial::sortTermArray() {
 	}
 }
 
+//다항식 덧셈 연산
 const Polynomial Polynomial::operator+(const Polynomial& p) {
-	Polynomial temp;
+	Polynomial temp; //결과값을 저장할 변수
 
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < count; i++) {	//this의 항들을 저장
 		temp.addTerm(termArray[i].c, termArray[i].exp);
 	}
 
-	for (int i = 0; i < p.count; i++) {
+	for (int i = 0; i < p.count; i++) { //p의 항들을 저장
 		temp.addTerm(p.termArray[i].c, p.termArray[i].exp);
 	}
 
-	temp.sortTermArray();
+	temp.sortTermArray();	//정렬 후 동류항 계산
 
-	return temp;
+	return temp;	//결과값 반환
 }
 
+//다항식 대입 연산
 Polynomial& Polynomial::operator=(const Polynomial& p) {
-	if (this != &p) {
-		delete[] termArray;
+	if (this != &p) {	//자기 자신을 대입하는게 아닐 경우
+		delete[] termArray;	//기존 배열을 해제
 		arraySize = 5;
 		count = 0;
-		termArray = new Term[arraySize];
+		termArray = new Term[arraySize]; //새로운 배열 할당
 
-		for (int i = 0; i < p.count; i++) {
+		for (int i = 0; i < p.count; i++) {	//p의 값을 복사
 			addTerm(p.termArray[i].c, p.termArray[i].exp);
 		}
 	}
 
-	return *this;
+	return *this;	//결과값 반환
 }
 
-//다항식의 곱셈
+//다항식의 단항 곱셈
 const Polynomial Polynomial::sMultPoly(const int c, const int e) {
-	Polynomial temp;
+	Polynomial temp;	//결과값을 저장할 변수
 
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < count; i++) {	//cx^e와 this를 곱한 결과를 temp에 저장
 		temp.addTerm(termArray[i].c * c, termArray[i].exp + e);
 	}
 
-	temp.sortTermArray();
+	temp.sortTermArray();	//정렬 후 동류항 계산
 
 	return temp;
 }
 
+//다항식의 곱 연산
 const Polynomial Polynomial::operator*(const Polynomial& p) {
-	Polynomial temp;
+	Polynomial temp;	//결과값을 저장할 변수
 
-	for (int i = 0; i < p.count; i++) {
+	for (int i = 0; i < p.count; i++) {	//p의 각 항을 this와 곱한 값을 temp에 더한다.
 		temp = temp + sMultPoly(p.termArray[i].c, p.termArray[i].exp);
 	}
 
-	temp.sortTermArray();
+	temp.sortTermArray();	//정렬 후 동류항 계산
 
-	return temp;
+	return temp;	//곱셈 결과 반환
 }
 
 //다항식의 값을 계산
@@ -259,5 +275,5 @@ const int Polynomial::evalPoly(const int c) {
 		y += termArray[i].c * (int)pow(c, termArray[i].exp);
 	}
 
-	return y;
+	return y; //결과값을 반환
 }
