@@ -9,6 +9,10 @@ template <typename T> class TreeNode;
 template <typename T>
 class TreeNode {
 	friend class Tree<T>;
+public:
+	TreeNode(T d = 0) : data(d), leftChild(0), rightChild(0) {}
+	void setLeftChild(TreeNode<T>* l) { leftChild = l; }
+	void setRightChild(TreeNode<T>* r) { rightChild = r; }
 private:
 	T data;
 	TreeNode<T>* leftChild;
@@ -24,26 +28,26 @@ private:
 };
 
 int main() {
-	string input, *Tree;
+	string input, * sTree;
 	int c = 256, i = 0;
 
-	Tree = new string[c];
-	Tree[i] == "NULL";
+	sTree = new string[c];
+	sTree[i] == "NULL";
 	i++;
 
 	for (cin >> input; input != "#"; cin >> input) {
-		Tree[i] = input;
+		sTree[i] = input;
 		i++;
 	}
 
-	if (Tree[1] == "NULL") {
-		cout << "error" << endl;
-		return 0;
+	for (int j = 2; j < i; j++) {	//부모가 NULL일경우 예외 처리
+		if (sTree[j / 2] == "NULL") {
+			cout << j << " error" << endl;
+			return 0;
+		}
 	}
 
-	for (int j = 2; j < i; j++) {
-		//부모 노드가 NULL인지 확인
-	}
+	//이진트리 구성
 
 	return 0;
 }
