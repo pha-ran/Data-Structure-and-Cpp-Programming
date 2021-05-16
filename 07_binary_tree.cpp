@@ -84,10 +84,10 @@ int main() {
 
 	Tree<int> tree(node[1]);	//트리를 생성
 
-	cout << "\n중위 순회" << endl;
+	cout << "\n중위 순회 결과 : ";
 	tree.inOrderPrintDataAndSum();
 
-	cout << "\n후위 순회" << endl;
+	cout << "\n후위 순회 결과 : ";
 	tree.postOrderPrintDataAndSum();
 
 	return 0;
@@ -96,27 +96,69 @@ int main() {
 template<typename T>
 void Tree<T>::inOrderPrintDataAndSum() {
 	Tree<T>::Stack stack;
-	TreeNode<T>* current = root;
+	TreeNode<T>* current = root;	//현재 노드
 	int sum = 0;
 
 	while (true) {
-		while (current) {
-			stack.Push(current);
-			current = current->leftChild;
+		while (current != NULL) {	//NULL이 아닌 동안
+			stack.Push(current);	//스택에 현재 노드 삽입
+			current = current->leftChild;	//LeftChild로 이동
 		}
-		if (stack.isEmpty()) {
+		if (stack.isEmpty()) {	//스택이 비어있을 경우 (종료 조건)
 			cout << "\n트리 내 정수 값의 합 : " << sum << endl;
 			return;
 		}
-		current = stack.Top();
-		sum += current->data;
-		stack.Pop();
-		cout << current->data << " ";
-		current = current->rightChild;
+		current = stack.Top(); stack.Pop();	//스택에서 꺼낸 노드로 이동
+		sum += current->data;	//노드의 데이터 값 누적
+		cout << current->data << " ";	//노드의 데이터 값 출력
+		current = current->rightChild;	//오른쪽 자식 노드로 이동
 	}
 }
 
 template<typename T>
 void Tree<T>::postOrderPrintDataAndSum() {
+	Tree<T>::Stack stack;
+	TreeNode<T>* current = root;	//현재 노드
+	TreeNode<T>* last = NULL;	//마지막 출력 노드
+	int sum = 0;
 
+	while (true) {
+		if (current != last &&	//현재 노드가 마지막 출력 노드와 다를 경우
+			current != NULL) {	//현재 노드가 NULL이 아닐 경우
+			stack.Push(current);	//스택에 현재 노드 삽입
+
+			while (current != NULL) {	//NULL이 아닌 동안
+				//스택에 NULL이 아닌 현재 노드의 RightChild 노드 삽입
+				if (current->rightChild != NULL) { stack.Push(current->rightChild); }
+				//스택에 NULL이 아닌 현재 노드의 LeftChild 노드 삽입
+				if (current->leftChild != NULL) { stack.Push(current->leftChild); }
+				current = current->leftChild;	//LeftChild로 이동
+			}
+		}
+
+		if (stack.isEmpty()) {	//스택이 비어있을 경우 (종료 조건)
+			cout << "\n트리 내 정수 값의 합 : " << sum << endl;
+			return;
+		}
+		else {	//스택이 비어있지 않을 경우
+			current = stack.Top(); stack.Pop();	//스택에서 꺼낸 노드로 이동
+
+			//10 20 30 NULL NULL 40 # 과 같은 입력을 처리하기 위해
+			if (current->leftChild != NULL &&	//LeftChild가 NULL이 아닐 경우
+				current->rightChild == NULL &&	//RightChild가 NULL인 경우
+				current->leftChild != last) {	//LeftChild가 아직 출력되지 않았을 경우
+				if (current != NULL) {
+					stack.Push(current);	//스택에 현재 노드 삽입
+					current = current->leftChild;	//LeftChild로 이동
+				}
+			}
+
+			if (current->rightChild == last ||	//현재 노드의 RightChild가 이미 출력이 됐을 경우
+				current->rightChild == NULL) {	//현재 노드의 RightChild가 NULL일 경우
+				sum += current->data;	//노드의 데이터 값 누적
+				cout << current->data << " ";	//노드의 데이터 값 출력
+				last = current;	//마지막 출력 노드를 현재 노드로 설정
+			}
+		}
+	}
 }
