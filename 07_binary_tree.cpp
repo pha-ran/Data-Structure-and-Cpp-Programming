@@ -23,8 +23,22 @@ template <typename T>
 class Tree {
 public:
 	Tree(TreeNode<T>* r) { root = r; }
+	void inOrderPrintDataAndSum();	//중위 순회
+	void postOrderPrintDataAndSum();	//후위 순회
 private:
 	TreeNode<T>* root;
+	//Stack
+	class Stack {
+	private:
+		TreeNode<T>** stack;
+		int top;
+	public:
+		Stack(int stackCapacity = 32) : top(-1) { stack = new TreeNode<T>*[stackCapacity]; }
+		bool isEmpty() const { return top == -1; }		//스택이 비었으면 1, 아니면 0 리턴
+		TreeNode<T>* Top() const { return stack[top]; }		//top 원소를 리턴
+		void Push(TreeNode<T>* t) { stack[++top] = t; }	//스택을 추가
+		void Pop() { top--; }		//top 원소 제거
+	};	//Stack
 };
 
 int main() {
@@ -39,8 +53,8 @@ int main() {
 		sTree[n] = input;
 	}
 
-	for (int j = 2; j <= n; j++) {	//부모가 NULL일경우 예외 처리
-		if (sTree[j / 2] == "NULL") {
+	for (int j = 2; j <= n; j++) {	//NULL이 아닌 노드의 부모가 NULL일경우 예외 처리
+		if (sTree[j] != "NULL" && sTree[j / 2] == "NULL") {
 			cout << "error" << endl;
 			return 0;
 		}
@@ -52,11 +66,11 @@ int main() {
 		node[1] = NULL;
 	}
 	else {	//공백 이진 트리가 아닐 경우 트리를 구성
-		node[1] = new TreeNode(stoi(sTree[1]));	//root노드 생성
+		node[1] = new TreeNode<int>(stoi(sTree[1]));	//root노드 생성
 
 		for (int j = 2; j <= n; j++) {	//root의 모든 자식 노드
 			if (sTree[j] != "NULL") {	//입력값이 NULL이 아닐 경우
-				node[j] = new TreeNode(stoi(sTree[j]));	//노드를 생성
+				node[j] = new TreeNode<int>(stoi(sTree[j]));	//노드를 생성
 
 				if (j & 1) {	//홀수 번째일 경우 부모의 RightChild로 추가
 					node[j / 2]->setRightChild(node[j]);
@@ -70,5 +84,39 @@ int main() {
 
 	Tree<int> tree(node[1]);	//트리를 생성
 
+	cout << "\n중위 순회" << endl;
+	tree.inOrderPrintDataAndSum();
+
+	cout << "\n후위 순회" << endl;
+	tree.postOrderPrintDataAndSum();
+
 	return 0;
+}
+
+template<typename T>
+void Tree<T>::inOrderPrintDataAndSum() {
+	Tree<T>::Stack stack;
+	TreeNode<T>* current = root;
+	int sum = 0;
+
+	while (true) {
+		while (current) {
+			stack.Push(current);
+			current = current->leftChild;
+		}
+		if (stack.isEmpty()) {
+			cout << "\n트리 내 정수 값의 합 : " << sum << endl;
+			return;
+		}
+		current = stack.Top();
+		sum += current->data;
+		stack.Pop();
+		cout << current->data << " ";
+		current = current->rightChild;
+	}
+}
+
+template<typename T>
+void Tree<T>::postOrderPrintDataAndSum() {
+
 }
